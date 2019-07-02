@@ -2,7 +2,7 @@ R"(
 #version 320 es
 layout(location = 0) in vec3 vertexPosition_modelspace;
 
-mediump float speed = .001;
+mediump float speed = .0007;
 uniform mediump float u_time;
 
 void main() {
