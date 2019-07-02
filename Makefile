@@ -1,10 +1,13 @@
 CXX=g++
 UPX=upx
+OUT=yolo
 
 all:
 	${CXX} -Os -g3 -Wall -static -c -fmessage-length=0 -o yolo.o "yolo.cpp"
-	${CXX} -o yolo yolo.o -lGL -lGLU -lGLEW -lglut
+	${CXX} -o ${OUT} yolo.o -lGL -lGLU -lGLEW -lglut
 
 small:
-	strip yolo
-	${UPX} --brute yolo
+	strip ${OUT}
+
+tiny: small
+	${UPX} --brute ${OUT}
