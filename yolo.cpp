@@ -8,7 +8,7 @@
 
 #include <GL/glew.h>
 #include <GL/glut.h>  // GLUT, includes glu.h and gl.h
-//#include <common/shader.hpp>
+#include <IL/il.h>
 const std::string FragmentShaderCode =
 #include "yolo.fs"
 ;
@@ -17,6 +17,7 @@ const std::string VertexShaderCode =
 ;
 
 GLuint programID;
+GLuint texid;
 
 GLuint LoadShaders() {
   // Create the shaders
@@ -78,6 +79,30 @@ GLuint LoadShaders() {
   return ProgramID;
 }
 
+/* Load an image using DevIL and return the devIL handle (-1 if failure) */
+int LoadImage(char *filename) {
+  ILboolean success;
+  ILuint image;
+
+  ilGenImages(1, &image);          /* Generation of one image name */
+  ilBindImage(image);              /* Binding of image name */
+  success = ilLoadImage(filename); /* Loading of the image filename by DevIL */
+
+  if (success) /* If no error occured: */
+  {
+    /* Convert every colour component into unsigned byte. If your image contains
+     * alpha channel you can replace IL_RGB with IL_RGBA */
+    success = ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+
+    if (!success) {
+      return -1;
+    }
+  } else
+    return -1;
+
+  return image;
+}
+
 // This will identify our vertex buffer
 GLuint vertexbuffer;
 
@@ -130,6 +155,10 @@ void display() {
   GLint uniform = glGetUniformLocation(programID, "u_time");
   glUniform1f( uniform, glutGet(GLUT_ELAPSED_TIME) );
 
+  glBindTexture(GL_TEXTURE_2D, texid); /* Binding of texture name */
+  GLint imageLoc = glGetUniformLocation(programID, "u_image");
+  glUniform1i( imageLoc, 0 );
+
   glFlush();  // Render now
 }
 
@@ -149,8 +178,33 @@ int main(int argc, char** argv) {
   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
   // Give our vertices to OpenGL.
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+
+  ILuint image;
+  ilInit();
+  image = LoadImage("tex.png");
+  /* OpenGL texture binding of the image loaded by DevIL  */
+  glGenTextures(1, &texid);            /* Texture name generation */
+  glBindTexture(GL_TEXTURE_2D, texid); /* Binding of texture name */
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                  GL_LINEAR); /* We will use linear interpolation for
+                                 magnification filter */
+  glTexParameteri(
+      GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+      GL_LINEAR); /* We will use linear interpolation for minifying filter */
+  glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP),
+               ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT), 0,
+               ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,
+               ilGetData()); /* Texture specification */
+
   glutDisplayFunc(display); // Register display callback handler for window re-paint
   glutIdleFunc(display);    // Repaint continuously
   glutMainLoop();           // Enter the infinitely event-processing loop
+
+  /* Delete used resources and quit */
+  ilDeleteImages(
+      1, &image); /* Because we have already copied image data into texture data
+                     we can release memory used by image. */
+  glDeleteTextures(1, &texid);
+
   return 0;
 }
