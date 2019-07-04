@@ -106,7 +106,6 @@ int LoadImage(char *filename) {
 // This will identify our vertex buffer
 GLuint positionbuffer;
 GLuint coordbuffer;
-GLuint vertexbuffer;
 GLuint elementbuffer;
 
 static const GLfloat g_position_buffer_data[] = {
@@ -122,14 +121,6 @@ static const GLfloat g_coord_buffer_data[] = {
   1.0f, 0.0f,
   1.0f, 1.0f,
   0.0f, 1.0f,
-};
-
-// An array of 3 vectors which represents 3 vertices
-static const GLfloat g_vertex_buffer_data[] = {
-   -1.0f, -1.0f, 0.0f,
-    1.0f, -1.0f, 0.0f,
-    1.0f,  1.0f, 0.0f,
-   -1.0f,  1.0f, 0.0f,
 };
 
 static const GLuint g_element_buffer_data[] = {
@@ -193,18 +184,6 @@ void initBuffers() {
     GL_ARRAY_BUFFER,
     sizeof(g_coord_buffer_data),
     g_coord_buffer_data,
-    GL_STATIC_DRAW
-  );
-
-  // Generate 1 buffer, put the resulting identifier in vertexbuffer
-  glGenBuffers(1, &vertexbuffer);
-  // The following commands will talk about our 'vertexbuffer' buffer
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  // Give our vertices to OpenGL.
-  glBufferData(
-    GL_ARRAY_BUFFER,
-    sizeof(g_vertex_buffer_data),
-    g_vertex_buffer_data,
     GL_STATIC_DRAW
   );
 
