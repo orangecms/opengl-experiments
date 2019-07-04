@@ -16,6 +16,8 @@ const std::string VertexShaderCode =
 #include "yolo.vs"
 ;
 
+GLuint programID;
+
 GLuint LoadShaders() {
   // Create the shaders
   GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
@@ -124,7 +126,6 @@ void display() {
   glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
   glDisableVertexAttribArray(0);
 
-  GLuint programID = LoadShaders();
   glUseProgram(programID);
   GLint uniform = glGetUniformLocation(programID, "u_time");
   glUniform1f( uniform, glutGet(GLUT_ELAPSED_TIME) );
@@ -141,6 +142,7 @@ int main(int argc, char** argv) {
   glutInitWindowSize(320, 320);   // Set the window's initial width & height
   glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
   glewInit();
+  programID = LoadShaders();
   // Generate 1 buffer, put the resulting identifier in vertexbuffer
   glGenBuffers(1, &vertexbuffer);
   // The following commands will talk about our 'vertexbuffer' buffer
