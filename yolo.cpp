@@ -104,13 +104,37 @@ int LoadImage(char *filename) {
 }
 
 // This will identify our vertex buffer
+GLuint positionbuffer;
+GLuint coordbuffer;
 GLuint vertexbuffer;
+GLuint elementbuffer;
+
+static const GLfloat g_position_buffer_data[] = {
+  -1.0f, -1.0f,
+   1.0f, -1.0f,
+   1.0f,  1.0f,
+  -1.0f,  1.0f,
+};
+
+// An array of 4 vectors which represents texture coordinates
+static const GLfloat g_coord_buffer_data[] = {
+  0.0f, 0.0f,
+  1.0f, 0.0f,
+  1.0f, 1.0f,
+  0.0f, 1.0f,
+};
 
 // An array of 3 vectors which represents 3 vertices
 static const GLfloat g_vertex_buffer_data[] = {
    -1.0f, -1.0f, 0.0f,
-   1.0f, -1.0f, 0.0f,
-   0.0f,  1.0f, 0.0f,
+    1.0f, -1.0f, 0.0f,
+    1.0f,  1.0f, 0.0f,
+   -1.0f,  1.0f, 0.0f,
+};
+
+static const GLuint g_element_buffer_data[] = {
+  0, 1, 2,
+  0, 2, 3,
 };
 
 /**
@@ -119,47 +143,79 @@ static const GLfloat g_vertex_buffer_data[] = {
  */
 void display() {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
-//  glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-/*
-  // Draw a Red 1x1 Square centered at origin
-  glBegin(GL_QUADS);              // Each set of 4 vertices form a quad
-    glColor3f(1.0f, 0.0f, 0.0f); // Red
-    glVertex2f(-0.5f, -0.5f);    // x, y
-    glVertex2f( 0.5f, -0.5f);
-    glVertex2f( 0.5f,  0.25f);
-    glVertex2f(-0.5f,  0.5f);
-  glEnd();
-*/
-  glEnable(GL_DEPTH_TEST);
-  GLuint VertexArrayID;
-  glGenVertexArrays(1, &VertexArrayID);
-  glBindVertexArray(VertexArrayID);
+  glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer
+  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  //glEnable(GL_DEPTH_TEST);
 
-  // 1st attribute buffer : vertices
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  glVertexAttribPointer(
-     0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-     3,                  // size
-     GL_FLOAT,           // type
-     GL_FALSE,           // normalized?
-     0,                  // stride
-     (void*)0            // array buffer offset
-  );
-  // Draw the triangle !
-  glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
-  glDisableVertexAttribArray(0);
-
-  glUseProgram(programID);
   GLint uniform = glGetUniformLocation(programID, "u_time");
   glUniform1f( uniform, glutGet(GLUT_ELAPSED_TIME) );
 
+  GLint position = glGetAttribLocation(programID, "a_position");
+  glBindBuffer(GL_ARRAY_BUFFER, positionbuffer);
+  glEnableVertexAttribArray(position);
+  glVertexAttribPointer(position, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+  GLint texcoord = glGetAttribLocation(programID, "a_texCoord");
+  glBindBuffer(GL_ARRAY_BUFFER, coordbuffer);
+  glEnableVertexAttribArray(texcoord);
+  glVertexAttribPointer(texcoord, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
+  glUseProgram(programID);
+
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texid); /* Binding of texture name */
   GLint imageLoc = glGetUniformLocation(programID, "u_image");
   glUniform1i( imageLoc, 0 );
 
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(texcoord);
+  glDisableVertexAttribArray(position);
+
   glFlush();  // Render now
+}
+
+void initBuffers() {
+  glGenBuffers(1, &positionbuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, positionbuffer);
+  glBufferData(
+    GL_ARRAY_BUFFER,
+    sizeof(g_position_buffer_data),
+    g_position_buffer_data,
+    GL_STATIC_DRAW
+  );
+  glGenBuffers(1, &coordbuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, coordbuffer);
+  glBufferData(
+    GL_ARRAY_BUFFER,
+    sizeof(g_coord_buffer_data),
+    g_coord_buffer_data,
+    GL_STATIC_DRAW
+  );
+
+  // Generate 1 buffer, put the resulting identifier in vertexbuffer
+  glGenBuffers(1, &vertexbuffer);
+  // The following commands will talk about our 'vertexbuffer' buffer
+  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+  // Give our vertices to OpenGL.
+  glBufferData(
+    GL_ARRAY_BUFFER,
+    sizeof(g_vertex_buffer_data),
+    g_vertex_buffer_data,
+    GL_STATIC_DRAW
+  );
+
+  glGenBuffers(1, &elementbuffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+  glBufferData(
+    GL_ELEMENT_ARRAY_BUFFER,
+    sizeof(g_element_buffer_data),
+    g_element_buffer_data,
+    GL_STATIC_DRAW
+  );
 }
 
 /**
@@ -172,12 +228,7 @@ int main(int argc, char** argv) {
   glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
   glewInit();
   programID = LoadShaders();
-  // Generate 1 buffer, put the resulting identifier in vertexbuffer
-  glGenBuffers(1, &vertexbuffer);
-  // The following commands will talk about our 'vertexbuffer' buffer
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  // Give our vertices to OpenGL.
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+  initBuffers();
 
   ILuint image;
   ilInit();
@@ -185,16 +236,15 @@ int main(int argc, char** argv) {
   /* OpenGL texture binding of the image loaded by DevIL  */
   glGenTextures(1, &texid);            /* Texture name generation */
   glBindTexture(GL_TEXTURE_2D, texid); /* Binding of texture name */
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                  GL_LINEAR); /* We will use linear interpolation for
-                                 magnification filter */
-  glTexParameteri(
-      GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-      GL_LINEAR); /* We will use linear interpolation for minifying filter */
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP),
                ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT), 0,
                ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,
                ilGetData()); /* Texture specification */
+  glGenerateMipmap(GL_TEXTURE_2D);
 
   glutDisplayFunc(display); // Register display callback handler for window re-paint
   glutIdleFunc(display);    // Repaint continuously
