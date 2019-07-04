@@ -11,3 +11,6 @@ small:
 
 tiny: small
 	${UPX} --brute ${OUT}
+
+devilx:
+	$(CC) devilx.c -lGL -lglut -lIL -o devilx
