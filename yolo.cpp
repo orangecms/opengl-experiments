@@ -9,6 +9,7 @@
 #include <GL/glew.h>
 #include <GL/glut.h>  // GLUT, includes glu.h and gl.h
 #include <IL/il.h>
+
 const std::string FragmentShaderCode =
 #include "yolo.fs"
 ;
@@ -128,15 +129,29 @@ static const GLuint g_element_buffer_data[] = {
   0, 2, 3,
 };
 
+int lastTime = 0;
+int nbFrames = 0;
+
 /**
  * Handler for window-repaint event. Call back when the window first appears and
  * whenever the window needs to be re-painted.
  */
 void display() {
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
-  glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer
-  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  //glEnable(GL_DEPTH_TEST);
+  // Measure speed
+  int currentTime = glutGet(GLUT_ELAPSED_TIME);
+  nbFrames++;
+  if (nbFrames == 200){
+    double deltaT = double(currentTime-lastTime);
+    char title[200];
+    sprintf(title, "%f ms/frame - %f fps", deltaT/200.0, 200000.0/deltaT);
+    glutSetWindowTitle(title);
+    nbFrames = 0;
+    lastTime = currentTime;
+  }
+
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glEnable(GL_DEPTH_TEST);
 
   GLint uniform = glGetUniformLocation(programID, "u_time");
   glUniform1f( uniform, glutGet(GLUT_ELAPSED_TIME) );
@@ -202,7 +217,7 @@ void initBuffers() {
  */
 int main(int argc, char** argv) {
   glutInit(&argc, argv);                 // Initialize GLUT
-  glutCreateWindow("OpenGL Setup Test"); // Create a window with the given title
+  glutCreateWindow("OpenGL Speed Test"); // Create a window with the given title
   glutInitWindowSize(320, 320);   // Set the window's initial width & height
   glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
   glewInit();
@@ -215,16 +230,25 @@ int main(int argc, char** argv) {
   /* OpenGL texture binding of the image loaded by DevIL  */
   glGenTextures(1, &texid);            /* Texture name generation */
   glBindTexture(GL_TEXTURE_2D, texid); /* Binding of texture name */
+  glTexImage2D(
+    GL_TEXTURE_2D,
+    0,
+    ilGetInteger(IL_IMAGE_BPP),
+    ilGetInteger(IL_IMAGE_WIDTH),
+    ilGetInteger(IL_IMAGE_HEIGHT),
+    0,
+    ilGetInteger(IL_IMAGE_FORMAT),
+    GL_UNSIGNED_BYTE,
+    ilGetData()
+  );
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP),
-               ilGetInteger(IL_IMAGE_WIDTH), ilGetInteger(IL_IMAGE_HEIGHT), 0,
-               ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,
-               ilGetData()); /* Texture specification */
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glGenerateMipmap(GL_TEXTURE_2D);
 
+  lastTime = glutGet(GLUT_ELAPSED_TIME);
+  printf("startup took %d ms", lastTime);
   glutDisplayFunc(display); // Register display callback handler for window re-paint
   glutIdleFunc(display);    // Repaint continuously
   glutMainLoop();           // Enter the infinitely event-processing loop
