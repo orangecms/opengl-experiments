@@ -14,7 +14,7 @@ void main()
 {
   float t = u_time * speed;
   vec4 texture = texture2D(u_image, v_texCoord);
-  vec4 color = texture * v_color * (v_texCoord.x/v_texCoord.y);
-  FragColor = color + 0.1 * vec4(.5, sin(t), cos(t), 1);
+  vec4 color = texture + .1 * v_color - (v_texCoord.x/(v_texCoord.x+v_texCoord.y));
+  FragColor = color * vec4(0.5 - .5*sin(t)*cos(t), cos(t), sin(t), 1);
 }
 )"
