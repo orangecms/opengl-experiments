@@ -7,7 +7,7 @@ uniform sampler2D u_image;
 in vec4 v_color;
 out vec4 FragColor;
 
-float speed = .001;
+float speed = .005;
 uniform float u_time;
 
 void main()
