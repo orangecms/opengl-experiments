@@ -1,5 +1,7 @@
-*yolo
-yolo.o
-yolo.upx
 *.swp
+*.o
+
 devilx
+glrecord
+yolo
+yolo.upx

@@ -14,3 +14,7 @@ tiny: small
 
 devilx:
 	$(CC) devilx.c -lGL -lglut -lIL -o devilx
+
+glrecord:
+	$(CC) -DPPM=1 -DLIBPNG=1 -DFFMPEG=1 -ggdb3 -std=c99 -O0 -Wall -Wextra \
+	  -o glrecord glrecord.c -lGL -lGLU -lglut -lpng -lavcodec -lswscale -lavutil
