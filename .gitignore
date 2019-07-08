@@ -1,7 +1,11 @@
 *.swp
 *.o
 
+*_shader.h
+*_shader.txt
+
 devilx
+glexp
 glrecord
 yolo
 yolo.upx
