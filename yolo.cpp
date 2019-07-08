@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <GL/glew.h>
-#include <GL/glut.h>  // GLUT, includes glu.h and gl.h
+#include <GL/glut.h>  // GLUT, includes glu.h
 #include <IL/il.h>
 
 const std::string FragmentShaderCode =
