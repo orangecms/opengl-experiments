@@ -318,7 +318,7 @@ static void init(void) {
   time0 = glutGet(GLUT_ELAPSED_TIME);
   model_init();
 #if FFMPEG
-  ffmpeg_encoder_start("tmp.mpg", AV_CODEC_ID_MPEG1VIDEO, 25, width, height);
+  ffmpeg_encoder_start("glrecord.mp4", AV_CODEC_ID_H264, 25, width, height);
 #endif
 }
 
