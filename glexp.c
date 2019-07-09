@@ -97,19 +97,6 @@ void ffmpeg_encoder_start(const char *filename, int codec_id, int fps,
 
 void ffmpeg_encoder_finish(void) {
   uint8_t endcode[] = {0, 0, 1, 0xb7};
-  int got_output, ret;
-  do {
-    fflush(stdout);
-    ret = avcodec_encode_video2(c, &pkt, NULL, &got_output);
-    if (ret < 0) {
-      fprintf(stderr, "Error encoding frame\n");
-      exit(1);
-    }
-    if (got_output) {
-      fwrite(pkt.data, 1, pkt.size, file);
-      av_packet_unref(&pkt);
-    }
-  } while (got_output);
   fwrite(endcode, 1, sizeof(endcode), file);
   fclose(file);
   avcodec_close(c);
@@ -119,17 +106,18 @@ void ffmpeg_encoder_finish(void) {
 }
 
 void ffmpeg_encoder_encode_frame(uint8_t *rgb) {
-  int ret, got_output;
+  int ret;
   ffmpeg_encoder_set_frame_yuv_from_rgb(rgb);
-  av_init_packet(&pkt);
   pkt.data = NULL;
   pkt.size = 0;
-  ret = avcodec_encode_video2(c, &pkt, frame, &got_output);
+  ret = avcodec_send_frame(c, frame);
   if (ret < 0) {
     fprintf(stderr, "Error encoding frame\n");
     exit(1);
   }
-  if (got_output) {
+  av_init_packet(&pkt);
+  ret = avcodec_receive_packet(c, &pkt);
+  if (ret == 0) {
     fwrite(pkt.data, 1, pkt.size, file);
     av_packet_unref(&pkt);
   }
